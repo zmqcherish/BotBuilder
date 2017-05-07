@@ -163,14 +163,20 @@ namespace Microsoft.Bot.Builder.Dialogs.Internals
                 .InstancePerLifetimeScope();
 
             builder
-                .RegisterType<JObjectBotData>()
+                .RegisterKeyedType<JObjectBotData, IBotData>()
                 .AsSelf()
                 .InstancePerLifetimeScope();
 
             builder
-                .Register(c => new DialogTaskManagerBotDataLoader(c.Resolve<JObjectBotData>(),
-                                                 c.Resolve<IDialogTaskManager>()))
-                .As<IBotData>()
+                .RegisterKeyedType<DialogTaskManagerBotDataLoader, IBotData>()
+                .InstancePerLifetimeScope();
+
+            builder
+                .RegisterAdapterChain<IBotData>
+                (
+                    typeof(JObjectBotData),
+                    typeof(DialogTaskManagerBotDataLoader)
+                )
                 .InstancePerLifetimeScope();
 
             builder
@@ -230,6 +236,12 @@ namespace Microsoft.Bot.Builder.Dialogs.Internals
                 .Register(c => new DeleteProfileScorable(c.Resolve<IDialogStack>(), c.Resolve<IBotData>(), c.Resolve<IBotToUser>(), c.ResolveKeyed<Regex>(Key_DeleteProfile_Regex)))
                 .As<IScorable<IActivity, double>>()
                 .InstancePerLifetimeScope();
+
+            // scorable implementing "end conversation"
+            builder
+                .RegisterInstance(EndConversationEvent.MakeScorable())
+                .As<IScorable<IResolver, double>>()
+                .SingleInstance();
 
             builder
                 .Register(c =>
@@ -361,6 +373,11 @@ namespace Microsoft.Bot.Builder.Dialogs.Internals
 
             builder
                 .RegisterType<KeyboardCardMapper>()
+                .AsImplementedInterfaces()
+                .SingleInstance();
+
+            builder
+                .RegisterType<SetLocalTimestampMapper>()
                 .AsImplementedInterfaces()
                 .SingleInstance();
 

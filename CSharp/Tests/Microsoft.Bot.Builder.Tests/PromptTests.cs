@@ -245,6 +245,20 @@ namespace Microsoft.Bot.Builder.Tests
         }
         
         [TestMethod]
+        public async Task PromptSuccess_Choice_MessageCaseInsensitive()
+        {
+            var choices = new[] { "one", "two", "three" };
+            await PromptSuccessAsync((context, resume) => PromptDialog.Choice(context, resume, choices, PromptText, promptStyle: PromptStyle.None), "Two", "two");
+        }
+
+        [TestMethod]
+        public async Task PromptSuccess_Choice_OptionsCaseInsensitive()
+        {
+            var choices = new[] { "One", "Two", "Three" };
+            await PromptSuccessAsync((context, resume) => PromptDialog.Choice(context, resume, choices, PromptText, promptStyle: PromptStyle.None), "two", "Two");
+        }
+
+        [TestMethod]
         public async Task PromptSuccess_Choice_Ordinal()
         {
             var choices = new[] { "one", "two", "three" };
@@ -263,6 +277,13 @@ namespace Microsoft.Bot.Builder.Tests
         {
             var choices = new[] { "one", "two", "three" };
             await PromptSuccessAsync((context, resume) => PromptDialog.Choice(context, resume, choices, PromptText, promptStyle: PromptStyle.None), "the third from last", "one");
+        }
+        
+        [TestMethod]
+        public async Task PromptSuccess_Choice_Reverse_Ordinal_SpecialCase()
+        {
+            var choices = new[] { "one", "two", "three" };
+            await PromptSuccessAsync((context, resume) => PromptDialog.Choice(context, resume, choices, PromptText, promptStyle: PromptStyle.None), "the last one", "three");
         }
 
         [TestMethod]

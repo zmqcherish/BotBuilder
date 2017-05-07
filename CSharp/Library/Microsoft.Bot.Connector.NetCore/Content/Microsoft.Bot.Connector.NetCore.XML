@@ -161,75 +161,12 @@
             Return an IInvokeActivity mask if this is an invoke activity
             </summary>
         </member>
-        <member name="M:Microsoft.Bot.Connector.Activity.GetStateClient(Microsoft.Bot.Connector.MicrosoftAppCredentials,System.String,System.Net.Http.DelegatingHandler[])">
+        <member name="M:Microsoft.Bot.Connector.Activity.GetActivityType(System.String)">
             <summary>
-            Get StateClient appropriate for this activity
+            Maps type to activity types 
             </summary>
-            <param name="credentials">credentials for bot to access state api</param>
-            <param name="serviceUrl">alternate serviceurl to use for state service</param>
-            <param name="handlers"></param>
-            <returns></returns>
-        </member>
-        <member name="M:Microsoft.Bot.Connector.Activity.GetStateClient(System.String,System.String,System.String,System.Net.Http.DelegatingHandler[])">
-            <summary>
-            Get StateClient appropriate for this activity
-            </summary>
-            <param name="microsoftAppId"></param>
-            <param name="microsoftAppPassword"></param>
-            <param name="serviceUrl">alternate serviceurl to use for state service</param>
-            <param name="handlers"></param>
-            <returns></returns>
-        </member>
-        <member name="M:Microsoft.Bot.Connector.Activity.HasContent">
-            <summary>
-            Check if the message has content
-            </summary>
-            <returns>Returns true if this message has any content to send</returns>
-        </member>
-        <member name="M:Microsoft.Bot.Connector.Activity.GetMentions">
-            <summary>
-            Get mentions 
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="M:Microsoft.Bot.Connector.Activity.MentionsId(System.String)">
-            <summary>
-            Is there a mention of Id in the Text Property 
-            </summary>
-            <param name="id">ChannelAccount.Id</param>
-            <returns>true if this id is mentioned in the text</returns>
-        </member>
-        <member name="M:Microsoft.Bot.Connector.Activity.MentionsRecipient">
-            <summary>
-            Is there a mention of Recipient.Id in the Text Property 
-            </summary>
-            <returns>true if this id is mentioned in the text</returns>
-        </member>
-        <member name="M:Microsoft.Bot.Connector.Activity.RemoveRecipientMention">
-            <summary>
-            Remove recipient mention text from Text property
-            </summary>
-            <returns>new .Text property value</returns>
-        </member>
-        <member name="M:Microsoft.Bot.Connector.Activity.RemoveMentionText(System.String)">
-            <summary>
-            Replace any mention text for given id from Text property
-            </summary>
-            <param name="id">id to match</param>
-            <returns>new .Text property value</returns>
-        </member>
-        <member name="M:Microsoft.Bot.Connector.Activity.GetChannelData``1">
-            <summary>
-            Get channeldata as typed structure
-            </summary>
-            <typeparam name="TypeT">type to use</typeparam>
-            <returns>typed object or default(TypeT)</returns>
-        </member>
-        <member name="M:Microsoft.Bot.Connector.Activity.GetActivityType">
-            <summary>
-            Return the "major" portion of the activity
-            </summary>
-            <returns>normalized major portion of the activity, aka message/... will return "message"</returns>
+            <param name="type"> The type.</param>
+            <returns> The activity type.</returns>
         </member>
         <member name="M:Microsoft.Bot.Connector.Activity.#ctor">
             <summary>
@@ -398,6 +335,96 @@
             Code indicating why the conversation has ended
             </summary>
         </member>
+        <member name="M:Microsoft.Bot.Connector.ActivityExtensions.GetStateClient(Microsoft.Bot.Connector.IActivity,Microsoft.Bot.Connector.MicrosoftAppCredentials,System.String,System.Net.Http.DelegatingHandler[])">
+            <summary>
+            Get StateClient appropriate for this activity
+            </summary>
+            <param name="credentials">credentials for bot to access state api</param>
+            <param name="serviceUrl">alternate serviceurl to use for state service</param>
+            <param name="handlers"></param>
+            <param name="activity"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Bot.Connector.ActivityExtensions.GetStateClient(Microsoft.Bot.Connector.IActivity,System.String,System.String,System.String,System.Net.Http.DelegatingHandler[])">
+            <summary>
+            Get StateClient appropriate for this activity
+            </summary>
+            <param name="microsoftAppId"></param>
+            <param name="microsoftAppPassword"></param>
+            <param name="serviceUrl">alternate serviceurl to use for state service</param>
+            <param name="handlers"></param>
+            <param name="activity"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Bot.Connector.ActivityExtensions.GetActivityType(Microsoft.Bot.Connector.IActivity)">
+            <summary>
+            Return the "major" portion of the activity
+            </summary>
+            <param name="activity"></param>
+            <returns>normalized major portion of the activity, aka message/... will return "message"</returns>
+        </member>
+        <member name="M:Microsoft.Bot.Connector.ActivityExtensions.GetChannelData``1(Microsoft.Bot.Connector.IActivity)">
+            <summary>
+            Get channeldata as typed structure
+            </summary>
+            <param name="activity"></param>
+            <typeparam name="TypeT">type to use</typeparam>
+            <returns>typed object or default(TypeT)</returns>
+        </member>
+        <member name="M:Microsoft.Bot.Connector.ActivityExtensions.TryGetChannelData``1(Microsoft.Bot.Connector.IActivity,``0@)">
+            <summary>
+            Get channeldata as typed structure
+            </summary>
+            <param name="activity"></param>
+            <typeparam name="TypeT">type to use</typeparam>
+            <param name="instance">The resulting instance, if possible</param>
+            <returns>
+            <c>true</c> if value of <seealso cref="P:Microsoft.Bot.Connector.IActivity.ChannelData"/> was coerceable to <typeparamref name="TypeT"/>, <c>false</c> otherwise.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Bot.Connector.ActivityExtensions.HasContent(Microsoft.Bot.Connector.IMessageActivity)">
+            <summary>
+            Check if the message has content
+            </summary>
+            <returns>Returns true if this message has any content to send</returns>
+        </member>
+        <member name="M:Microsoft.Bot.Connector.ActivityExtensions.GetMentions(Microsoft.Bot.Connector.IMessageActivity)">
+            <summary>
+            Get mentions 
+            </summary>
+            <param name="activity"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Bot.Connector.ActivityExtensions.MentionsId(Microsoft.Bot.Connector.IMessageActivity,System.String)">
+            <summary>
+            Is there a mention of Id in the Text Property 
+            </summary>
+            <param name="id">ChannelAccount.Id</param>
+            <param name="activity"></param>
+            <returns>true if this id is mentioned in the text</returns>
+        </member>
+        <member name="M:Microsoft.Bot.Connector.ActivityExtensions.MentionsRecipient(Microsoft.Bot.Connector.IMessageActivity)">
+            <summary>
+            Is there a mention of Recipient.Id in the Text Property 
+            </summary>
+            <param name="activity"></param>
+            <returns>true if this id is mentioned in the text</returns>
+        </member>
+        <member name="M:Microsoft.Bot.Connector.ActivityExtensions.RemoveRecipientMention(Microsoft.Bot.Connector.IMessageActivity)">
+            <summary>
+            Remove recipient mention text from Text property
+            </summary>
+            <param name="activity"></param>
+            <returns>new .Text property value</returns>
+        </member>
+        <member name="M:Microsoft.Bot.Connector.ActivityExtensions.RemoveMentionText(Microsoft.Bot.Connector.IMessageActivity,System.String)">
+            <summary>
+            Replace any mention text for given id from Text property
+            </summary>
+            <param name="id">id to match</param>
+            <param name="activity"></param>
+            <returns>new .Text property value</returns>
+        </member>
         <member name="T:Microsoft.Bot.Connector.ActivityTypes">
             <summary>
             Types of Activities
@@ -531,16 +558,33 @@
             A response object containing the response body and response headers.
             </return>
         </member>
-        <member name="M:Microsoft.Bot.Connector.BotAuthenticator.#ctor(System.String,System.String)">
+        <member name="T:Microsoft.Bot.Connector.BotAuthenticator.EndorsementsValidator">
+            <summary>
+            The endorsements validator delegate. 
+            </summary>
+            <param name="activities"> The activities.</param>
+            <param name="endorsements"> The endorsements used for validation.</param>
+            <returns>true if validation passes; false otherwise.</returns>
+        </member>
+        <member name="M:Microsoft.Bot.Connector.BotAuthenticator.#ctor(System.String,System.String,Microsoft.Bot.Connector.BotAuthenticator.EndorsementsValidator)">
             <summary>
             Creates an instance of bot authenticator. 
             </summary>
             <param name="microsoftAppId"> The Microsoft app Id.</param>
             <param name="microsoftAppPassword"> The Microsoft app password.</param>
+            <param name="validator"> The endorsements validator.</param>
             <remarks> This constructor sets the <see cref="F:Microsoft.Bot.Connector.BotAuthenticator.openIdConfigurationUrl"/> to 
             <see cref="F:Microsoft.Bot.Connector.JwtConfig.ToBotFromChannelOpenIdMetadataUrl"/>  and doesn't disable 
             the self issued tokens used by emulator.
             </remarks>
+        </member>
+        <member name="M:Microsoft.Bot.Connector.BotAuthenticator.GenerateUnauthorizedResponse(System.Net.Http.HttpRequestMessage,System.String)">
+            <summary>
+            Generates <see cref="F:System.Net.HttpStatusCode.Unauthorized"/> response for the request.
+            </summary>
+            <param name="request">The request.</param>
+            <param name="reason">The reason phrase for unauthorized status code.</param>
+            <returns>A response with status code unauthorized.</returns>
         </member>
         <member name="M:Microsoft.Bot.Connector.BotAuthenticator.TryAuthenticateAsync(System.Net.Http.HttpRequestMessage,System.Collections.Generic.IEnumerable{Microsoft.Bot.Connector.IActivity},System.Threading.CancellationToken)">
             <summary>
@@ -552,12 +596,14 @@
             <param name="token"> The cancellation token.</param>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.Bot.Connector.BotAuthenticator.GenerateUnauthorizedResponse(System.Net.Http.HttpRequestMessage)">
+        <member name="M:Microsoft.Bot.Connector.BotAuthenticator.AuthenticateAsync(System.Net.Http.HttpRequestMessage,System.Collections.Generic.IEnumerable{Microsoft.Bot.Connector.IActivity},System.Threading.CancellationToken)">
             <summary>
-            Generates <see cref="F:System.Net.HttpStatusCode.Unauthorized"/> response for the request.
+            Authenticates the request and returns the IdentityToken.
             </summary>
-            <param name="request">The request.</param>
-            <returns>A response with status code unauthorized.</returns>
+            <param name="request"> The request that should be authenticated.</param>
+            <param name="activities"> The activities extracted from request.</param>
+            <param name="token"> The cancellation token.</param>
+            <returns> The <see cref="T:Microsoft.Bot.Connector.IdentityToken"/>.</returns>
         </member>
         <member name="M:Microsoft.Bot.Connector.BotData.GetProperty``1(System.String)">
             <summary>
@@ -649,6 +695,11 @@
         <member name="T:Microsoft.Bot.Connector.ChannelAccount">
             <summary>
             Channel account information needed to route a message
+            </summary>
+        </member>
+        <member name="P:Microsoft.Bot.Connector.ChannelAccount.Properties">
+            <summary>
+            Extension data for overflow of properties
             </summary>
         </member>
         <member name="M:Microsoft.Bot.Connector.ChannelAccount.#ctor">
@@ -2608,7 +2659,7 @@
         </member>
         <member name="P:Microsoft.Bot.Connector.CardAction.Type">
             <summary>
-            Defines the type of action implemented by this button.
+            Defines the type of action implemented by this button. Defaults to <see cref="F:Microsoft.Bot.Connector.ActionTypes.ImBack"/>
             </summary>
         </member>
         <member name="P:Microsoft.Bot.Connector.CardAction.Title">
@@ -2687,6 +2738,11 @@
         <member name="P:Microsoft.Bot.Connector.ConversationAccount.Name">
             <summary>
             Display friendly name
+            </summary>
+        </member>
+        <member name="P:Microsoft.Bot.Connector.ConversationAccount.Properties">
+            <summary>
+            Extension data for overflow of properties
             </summary>
         </member>
         <member name="T:Microsoft.Bot.Connector.ConversationParameters">
@@ -2842,6 +2898,11 @@
         <member name="P:Microsoft.Bot.Connector.Entity.Type">
             <summary>
             Entity Type (typically from schema.org types)
+            </summary>
+        </member>
+        <member name="P:Microsoft.Bot.Connector.Entity.Properties">
+            <summary>
+            Extension data for overflow of properties
             </summary>
         </member>
         <member name="M:Microsoft.Bot.Connector.Entity.GetAs``1">
@@ -3568,13 +3629,6 @@
             True if this activity has text, attachments, or channelData
             </summary>
         </member>
-        <member name="M:Microsoft.Bot.Connector.IMessageActivity.GetChannelData``1">
-            <summary>
-            Get channeldata as typed structure
-            </summary>
-            <typeparam name="TypeT">type to use</typeparam>
-            <returns>typed object or default(TypeT)</returns>
-        </member>
         <member name="M:Microsoft.Bot.Connector.IMessageActivity.GetMentions">
             <summary>
             Get mentions
@@ -3636,6 +3690,11 @@
             TO BOT FROM CHANNEL: Token validation parameters when connecting to a bot
             </summary>
         </member>
+        <member name="F:Microsoft.Bot.Connector.JwtConfig.ToBotFromChannelAllowedSigningAlgorithms">
+            <summary>
+            TO BOT FROM CHANNEL: Allowed token signing algorithms
+            </summary>
+        </member>
         <member name="F:Microsoft.Bot.Connector.JwtConfig.ToBotFromEmulatorOpenIdMetadataUrl">
             <summary>
             TO BOT FROM EMULATOR: OpenID metadata document for tokens coming from MSA
@@ -3646,9 +3705,21 @@
             TO BOT FROM EMULATOR: Token validation parameters when connecting to a channel
             </summary>
         </member>
+        <member name="T:Microsoft.Bot.Connector.JwtTokenExtractor.EndorsementsValidator">
+            <summary>
+            The endorsements validator delegate.
+            </summary>
+            <param name="endorsements"> The endorsements used for validation.</param>
+            <returns>true if validation passes; false otherwise.</returns>
+        </member>
         <member name="F:Microsoft.Bot.Connector.JwtTokenExtractor._openIdMetadataCache">
             <summary>
-            Shared of OpenIdConnect configuration managers (one per metadata URL)
+            Cache for OpenIdConnect configuration managers (one per metadata URL)
+            </summary>
+        </member>
+        <member name="F:Microsoft.Bot.Connector.JwtTokenExtractor._endorsementsCache">
+            <summary>
+            Cache for Endorsement configuration managers (one per metadata URL)
             </summary>
         </member>
         <member name="F:Microsoft.Bot.Connector.JwtTokenExtractor._tokenValidationParameters">
@@ -3658,7 +3729,22 @@
         </member>
         <member name="F:Microsoft.Bot.Connector.JwtTokenExtractor._openIdMetadata">
             <summary>
-            OpenIdConnect configuration manager for this instances
+            OpenIdConnect configuration manager for this instance
+            </summary>
+        </member>
+        <member name="F:Microsoft.Bot.Connector.JwtTokenExtractor._endorsementsData">
+            <summary>
+            Endorsements configuration manager for this instance
+            </summary>
+        </member>
+        <member name="F:Microsoft.Bot.Connector.JwtTokenExtractor._allowedSigningAlgorithms">
+            <summary>
+            Allowed signing algorithms
+            </summary>
+        </member>
+        <member name="F:Microsoft.Bot.Connector.JwtTokenExtractor._validator">
+            <summary>
+            Delegate for validating endorsements extracted from JwtToken
             </summary>
         </member>
         <member name="T:Microsoft.Bot.Connector.Mention">

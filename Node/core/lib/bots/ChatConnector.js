@@ -65,21 +65,23 @@ var ChatConnector = (function () {
             }
         }
         if (token) {
-            req.body['useAuth'] = true;
-            var decoded = jwt.decode(token, { complete: true });
+            var decoded_1 = jwt.decode(token, { complete: true });
             var verifyOptions;
             var openIdMetadata;
-            if (isEmulator && decoded.payload.iss == this.settings.endpoint.msaIssuer) {
+            var algorithms = ['RS256', 'RS384', 'RS512'];
+            if (isEmulator && decoded_1.payload.iss == this.settings.endpoint.msaIssuer) {
                 openIdMetadata = this.msaOpenIdMetadata;
                 verifyOptions = {
+                    algorithms: algorithms,
                     issuer: this.settings.endpoint.msaIssuer,
                     audience: this.settings.endpoint.msaAudience,
                     clockTolerance: 300
                 };
             }
-            else if (isEmulator && decoded.payload.iss == this.settings.endpoint.emulatorIssuer) {
+            else if (isEmulator && decoded_1.payload.iss == this.settings.endpoint.emulatorIssuer) {
                 openIdMetadata = this.emulatorOpenIdMetadata;
                 verifyOptions = {
+                    algorithms: algorithms,
                     issuer: this.settings.endpoint.emulatorIssuer,
                     audience: this.settings.endpoint.emulatorAudience,
                     clockTolerance: 300
@@ -93,20 +95,42 @@ var ChatConnector = (function () {
                     clockTolerance: 300
                 };
             }
-            if (isEmulator && decoded.payload.appid != this.settings.appId) {
+            if (isEmulator && decoded_1.payload.appid != this.settings.appId) {
                 logger.error('ChatConnector: receive - invalid token. Requested by unexpected app ID.');
                 res.status(403);
                 res.end();
                 return;
             }
-            openIdMetadata.getKey(decoded.header.kid, function (key) {
+            openIdMetadata.getKey(decoded_1.header.kid, function (key) {
                 if (key) {
                     try {
-                        jwt.verify(token, key, verifyOptions);
+                        jwt.verify(token, key.key, verifyOptions);
+                        if (typeof req.body.channelId !== 'undefined' &&
+                            typeof key.endorsements !== 'undefined' &&
+                            key.endorsements.lastIndexOf(req.body.channelId) === -1) {
+                            var errorDescription = "channelId in req.body: " + req.body.channelId + " didn't match the endorsements: " + key.endorsements.join(',') + ".";
+                            logger.error("ChatConnector: receive - endorsements validation failure. " + errorDescription);
+                            throw new Error(errorDescription);
+                        }
+                        if (typeof decoded_1.payload.serviceurl !== 'undefined' &&
+                            typeof req.body.serviceUrl !== 'undefined' &&
+                            decoded_1.payload.serviceurl !== req.body.serviceUrl) {
+                            var errorDescription = "ServiceUrl in payload of token: " + decoded_1.payload.serviceurl + " didn't match the request's serviceurl: " + req.body.serviceUrl + ".";
+                            logger.error("ChatConnector: receive - serviceurl mismatch. " + errorDescription);
+                            throw new Error(errorDescription);
+                        }
+                        if (typeof decoded_1.payload.serviceurl !== 'undefined' &&
+                            typeof req.body.serviceUrl !== 'undefined') {
+                            if (decoded_1.payload.serviceurl !== req.body.serviceUrl) {
+                                var errorDescription = "ServiceUrl in payload of token: " + decoded_1.payload.serviceurl + " didn't match the request's serviceurl: " + req.body.serviceUrl + ".";
+                                logger.error("ChatConnector: receive - serviceurl mismatch. " + errorDescription);
+                                throw new Error(errorDescription);
+                            }
+                        }
                     }
                     catch (err) {
                         logger.error('ChatConnector: receive - invalid token. Check bot\'s app ID & Password.');
-                        res.status(403);
+                        res.send(403, err);
                         res.end();
                         return;
                     }
@@ -122,7 +146,6 @@ var ChatConnector = (function () {
         }
         else if (isEmulator && !this.settings.appId && !this.settings.appPassword) {
             logger.warn(req.body, 'ChatConnector: receive - emulator running without security enabled.');
-            req.body['useAuth'] = false;
             this.dispatch(req.body, res);
         }
         else {
@@ -139,10 +162,17 @@ var ChatConnector = (function () {
     };
     ChatConnector.prototype.send = function (messages, done) {
         var _this = this;
+        var addresses = [];
         async.forEachOfSeries(messages, function (msg, idx, cb) {
             try {
-                if (msg.address && msg.address.serviceUrl) {
-                    _this.postMessage(msg, (idx == messages.length - 1), cb);
+                if (msg.type == 'delay') {
+                    setTimeout(cb, msg.value);
+                }
+                else if (msg.address && msg.address.serviceUrl) {
+                    _this.postMessage(msg, (idx == messages.length - 1), function (err, address) {
+                        addresses.push(address);
+                        cb(err);
+                    });
                 }
                 else {
                     logger.error('ChatConnector: send - message is missing address or serviceUrl.');
@@ -152,7 +182,7 @@ var ChatConnector = (function () {
             catch (e) {
                 cb(e);
             }
-        }, done);
+        }, function (err) { return done(err, !err ? addresses : null); });
     };
     ChatConnector.prototype.startConversation = function (address, done) {
         if (address && address.user && address.bot && address.serviceUrl) {
@@ -196,6 +226,27 @@ var ChatConnector = (function () {
             logger.error('ChatConnector: startConversation - address is invalid.');
             done(new Error('Invalid address.'));
         }
+    };
+    ChatConnector.prototype.update = function (message, done) {
+        var address = message.address;
+        if (message.address && address.serviceUrl) {
+            message.id = address.id;
+            this.postMessage(message, true, done, 'PUT');
+        }
+        else {
+            logger.error('ChatConnector: updateMessage - message is missing address or serviceUrl.');
+            done(new Error('Message missing address or serviceUrl.'), null);
+        }
+    };
+    ChatConnector.prototype.delete = function (address, done) {
+        var path = '/v3/conversations/' + encodeURIComponent(address.conversation.id) +
+            '/activities/' + encodeURIComponent(address.id);
+        var options = {
+            method: 'DELETE',
+            url: urlJoin(address.serviceUrl, path),
+            json: true
+        };
+        this.authenticatedRequest(options, function (err, response, body) { return done(err); });
     };
     ChatConnector.prototype.getData = function (context, callback) {
         var _this = this;
@@ -363,12 +414,14 @@ var ChatConnector = (function () {
         }
     };
     ChatConnector.prototype.onDispatchEvents = function (events, callback) {
-        if (this.isInvoke(events[0])) {
-            this.onInvokeHandler(events[0], callback);
-        }
-        else {
-            this.onEventHandler(events);
-            callback(null, null, 202);
+        if (events && events.length > 0) {
+            if (this.isInvoke(events[0])) {
+                this.onInvokeHandler(events[0], callback);
+            }
+            else {
+                this.onEventHandler(events);
+                callback(null, null, 202);
+            }
         }
     };
     ChatConnector.prototype.dispatch = function (msg, res) {
@@ -399,7 +452,8 @@ var ChatConnector = (function () {
     ChatConnector.prototype.isInvoke = function (event) {
         return (event && event.type && event.type.toLowerCase() == consts.invokeType);
     };
-    ChatConnector.prototype.postMessage = function (msg, lastMsg, cb) {
+    ChatConnector.prototype.postMessage = function (msg, lastMsg, cb, method) {
+        if (method === void 0) { method = 'POST'; }
         logger.info(address, 'ChatConnector: sending message.');
         this.prepOutgoingMessage(msg);
         var address = msg.address;
@@ -414,24 +468,26 @@ var ChatConnector = (function () {
             path += '/' + encodeURIComponent(address.id);
         }
         var options = {
-            method: 'POST',
+            method: method,
             url: urlJoin(address.serviceUrl, path),
             body: msg,
             json: true
         };
-        if (address.useAuth) {
-            this.authenticatedRequest(options, function (err, response, body) { return cb(err); });
-        }
-        else {
-            this.addUserAgent(options);
-            request(options, function (err, response, body) {
-                if (!err && response.statusCode >= 400) {
-                    var txt = "Request to '" + options.url + "' failed: [" + response.statusCode + "] " + response.statusMessage;
-                    err = new Error(txt);
+        this.authenticatedRequest(options, function (err, response, body) {
+            if (!err) {
+                if (body && body.id) {
+                    var newAddress = utils.clone(address);
+                    newAddress.id = body.id;
+                    cb(null, newAddress);
                 }
-                cb(err);
-            });
-        }
+                else {
+                    cb(null, address);
+                }
+            }
+            else {
+                cb(err, null);
+            }
+        });
     };
     ChatConnector.prototype.authenticatedRequest = function (options, callback, refresh) {
         var _this = this;
@@ -446,7 +502,7 @@ var ChatConnector = (function () {
                         switch (response.statusCode) {
                             case 401:
                             case 403:
-                                if (!refresh) {
+                                if (!refresh && _this.settings.appId && _this.settings.appPassword) {
                                     _this.authenticatedRequest(options, callback, true);
                                 }
                                 else {
@@ -621,6 +677,5 @@ var toAddress = {
     'from': 'user',
     'conversation': 'conversation',
     'recipient': 'bot',
-    'serviceUrl': 'serviceUrl',
-    'useAuth': 'useAuth'
+    'serviceUrl': 'serviceUrl'
 };

@@ -26,6 +26,7 @@ var Session = (function (_super) {
         _this._locale = null;
         _this.localizer = null;
         _this.logger = null;
+        _this.connector = options.connector;
         _this.library = options.library;
         _this.localizer = options.localizer;
         _this.logger = options.logger;
@@ -225,6 +226,14 @@ var Session = (function (_super) {
         this.sendBatch();
         return this;
     };
+    Session.prototype.delay = function (delay) {
+        this.msgSent = true;
+        var m = { type: 'delay', value: delay.toString() };
+        this.prepareMessage(m);
+        this.batch.push(m);
+        this.logger.log(this.dialogStack(), "Session.delay(" + delay + ")");
+        return this;
+    };
     Session.prototype.messageSent = function () {
         return this.msgSent;
     };
@@ -390,7 +399,7 @@ var Session = (function (_super) {
     Session.prototype.isReset = function () {
         return this._isReset;
     };
-    Session.prototype.sendBatch = function (callback) {
+    Session.prototype.sendBatch = function (done) {
         var _this = this;
         this.logger.log(this.dialogStack(), 'Session.sendBatch() sending ' + this.batch.length + ' message(s)');
         if (this.sendingBatch) {
@@ -411,21 +420,21 @@ var Session = (function (_super) {
         }
         this.onSave(function (err) {
             if (!err) {
-                _this.onSend(batch, function (err) {
+                _this.onSend(batch, function (err, addresses) {
                     _this.onFinishBatch(function () {
                         if (_this.batchStarted) {
                             _this.startBatch();
                         }
-                        if (callback) {
-                            callback(err);
+                        if (done) {
+                            done(err, addresses);
                         }
                     });
                 });
             }
             else {
                 _this.onFinishBatch(function () {
-                    if (callback) {
-                        callback(err);
+                    if (done) {
+                        done(err, null);
                     }
                 });
             }
@@ -584,15 +593,15 @@ var Session = (function (_super) {
     Session.prototype.onSend = function (batch, cb) {
         var _this = this;
         if (batch && batch.length > 0) {
-            this.options.onSend(batch, function (err) {
+            this.options.onSend(batch, function (err, responses) {
                 if (err) {
                     _this.logger.error(_this.dialogStack(), err);
                 }
-                cb(err);
+                cb(err, responses);
             });
         }
         else {
-            cb(null);
+            cb(null, null);
         }
     };
     Session.prototype.onFinishBatch = function (cb) {
